@@ -1,6 +1,6 @@
 #include "hsolver_lcao.h"
 
-#include "diago_scalapack.h"
+#include "diago_blas.h"
 #include "diago_cg.h"
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
@@ -49,7 +49,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoScalapack<T>();
+            this->pdiagh = new DiagoBlas<T>();
             this->pdiagh->method = this->method;
         }
     }
@@ -264,7 +264,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     else 
     {
 
-        using ct_Device = typename ct::PsiToContainer<base_device::DEVICE_CPU>::type;
+        using ct_Device = typename ct::PsiToContainer<psi::DEVICE_CPU>::type;
         auto cg = reinterpret_cast<DiagoCG<T>*>(this->pdiagh);
 
         hamilt::MatrixBlock<T> h_mat, s_mat;

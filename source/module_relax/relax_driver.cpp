@@ -8,7 +8,9 @@
 #include "module_io/json_output/output_info.h"
 
 
-void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
+
+template<typename FPTYPE, typename Device>
+void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolver)
 {
     ModuleBase::TITLE("Ions", "opt_ions");
     ModuleBase::timer::tick("Ions", "opt_ions");
@@ -113,10 +115,12 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
                     GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
                 }
 
-                if (p_esolver
+                ModuleESolver::ESolver_KS<FPTYPE, Device>* p_esolver_ks 
+                = dynamic_cast<ModuleESolver::ESolver_KS<FPTYPE, Device>*>(p_esolver);
+                if (p_esolver_ks 
                     && stop 
-                    && p_esolver->get_maxniter() == p_esolver->get_niter()
-                    && !(p_esolver->get_conv_elec()))
+                    && p_esolver_ks->maxniter == p_esolver_ks->niter 
+                    && !(p_esolver_ks->conv_elec))
                 {
                     std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
                     std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
@@ -161,3 +165,6 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
     ModuleBase::timer::tick("Ions", "opt_ions");
     return;
 }
+
+template class Relax_Driver<float, psi::DEVICE_CPU>;
+template class Relax_Driver<double, psi::DEVICE_CPU>;

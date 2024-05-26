@@ -16,11 +16,11 @@ class Grid_BigCell: public Grid_MeshCell
 	// save the relative cartesian position
 	// to bigcell of each atom.
 	double** tau_in_bigcell;
-	int nat;
+
 	protected:
 
 	//---------------------------------
-	void init_big_latvec(const UnitCell &ucell);
+	void init_big_latvec(void);
 
 	double bigcell_vec1[3];
 	double bigcell_vec2[3];
@@ -32,7 +32,7 @@ class Grid_BigCell: public Grid_MeshCell
 
 
 	//---------------------------------
-	void init_grid_expansion(const UnitCell& ucell,double* rcut);
+	void init_grid_expansion(void);
 
 	// get the max radius of all orbitals.
 	// which will use to generate grid expansion,
@@ -59,7 +59,7 @@ class Grid_BigCell: public Grid_MeshCell
 
 
 	//---------------------------------
-	void init_tau_in_bigcell(const UnitCell& ucell);
+	void init_tau_in_bigcell(void);
 
 	//this flag will be false at first and turned to true after memory of tau_in_meshcell has been allocated.  
 	bool flag_tib;

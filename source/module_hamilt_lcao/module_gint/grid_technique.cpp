@@ -5,7 +5,6 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hsolver/kernels/cuda/helper_cuda.h"
-
 Grid_Technique::Grid_Technique()
 {
     this->nlocdimg = nullptr;
@@ -88,7 +87,7 @@ Grid_Technique::~Grid_Technique()
     
     if (allocate_find_R2)
     {
-        for (int iat = 0; iat < this->nat; iat++)
+        for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
         {
             delete[] find_R2[iat];
             delete[] find_R2st[iat];
@@ -102,7 +101,7 @@ Grid_Technique::~Grid_Technique()
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
     {
-        free_gpu_gint_variables(this->nat);
+        free_gpu_gint_variables();
     }
 #endif
 }
@@ -125,9 +124,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
                                   const int& nbzp_in,
                                   const int& ny,
                                   const int& nplane,
-                                  const int& startz_current,
-                                  const UnitCell& ucell,
-                                  const LCAO_Orbitals& orb)
+                                  const int& startz_current)
 {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
@@ -152,39 +149,33 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
                        nbxx_in,
                        nbzp_start_in,
                        nbzp_in);
-    this->ucell=&ucell;
-    this->orb=&orb;
-    this->init_latvec(ucell);
 
-    this->init_big_latvec(ucell);
+    this->init_latvec();
+
+    this->init_big_latvec();
 
     this->init_meshcell_pos();
 
     // (2) expand the grid
-    double* rcut=new double[ucell.ntype];
-    for(int T=0; T<ucell.ntype; T++)
-	{
-		rcut[T]=orb.Phi[T].getRcut();
-	}
-    this->init_grid_expansion(ucell,rcut);
+    this->init_grid_expansion();
 
     // (3) calculate the extended grid.
     this->cal_extended_cell(this->dxe, this->dye, this->dze);
 
-    this->init_tau_in_bigcell(ucell);
+    this->init_tau_in_bigcell();
 
     // init meshball
     this->delete_meshball_positions(); // LiuXh add 2018-12-14
 
     this->init_meshball();
 
-    this->init_atoms_on_grid(ny, nplane, startz_current,ucell);
+    this->init_atoms_on_grid(ny, nplane, startz_current);
 
-    this->cal_trace_lo(ucell);
+    this->cal_trace_lo();
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
     {
-        this->init_gpu_gint_variables(ucell,orb);
+        this->init_gpu_gint_variables();
     }
 #endif
 
@@ -246,8 +237,7 @@ void Grid_Technique::get_startind(const int& ny,
 // mohan add 2021-04-06
 void Grid_Technique::init_atoms_on_grid(const int& ny,
                                         const int& nplane,
-                                        const int& startz_current,
-                                        const UnitCell& ucell)
+                                        const int& startz_current)
 {
     ModuleBase::TITLE("Grid_Technique", "init_atoms_on_grid");
 
@@ -279,8 +269,8 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     // (3) Find the atoms using
     // when doing grid integration.
     delete[] in_this_processor;
-    this->in_this_processor = new bool[ucell.nat];
-    for (int i = 0; i < ucell.nat; i++)
+    this->in_this_processor = new bool[GlobalC::ucell.nat];
+    for (int i = 0; i < GlobalC::ucell.nat; i++)
     {
         in_this_processor[i] = false;
     }
@@ -298,9 +288,9 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
 	int normal=0;
 	this->total_atoms_on_grid = 0;
 	int nat_local = 0;
-	for(int it=0; it<ucell.ntype; it++)
+	for(int it=0; it<GlobalC::ucell.ntype; it++)
 	{
-		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
 			for(int im=0; im< this->meshball_ncells; im++)
 			{
@@ -361,7 +351,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     if (nat_local > 0)
     {
         this->trace_iat.resize(nat_local);
-        for (int iat = ucell.nat - 1; iat >= 0; iat--)
+        for (int iat = GlobalC::ucell.nat - 1; iat >= 0; iat--)
         {
             if (this->in_this_processor[iat])
             {
@@ -373,7 +363,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     // need how_many_atoms first.
     this->cal_grid_integration_index();
     // bcell_start is needed.
-    this->init_atoms_on_grid2(index2normal,ucell);
+    this->init_atoms_on_grid2(index2normal);
     delete[] index2normal;
     return;
 }
@@ -420,7 +410,7 @@ void Grid_Technique::check_bigcell(int*& ind_bigcell,
     return;
 }
 
-void Grid_Technique::init_atoms_on_grid2(const int* index2normal,const UnitCell& ucell)
+void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
 {
     ModuleBase::TITLE("Grid_Techinique", "init_atoms_on_grid2");
 
@@ -465,9 +455,9 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,const UnitCell&
 	int count = 0;
 	int iat = 0;
 	ModuleBase::GlobalFunc::ZEROS(this->how_many_atoms, nbxx);
-	for(int it=0; it<ucell.ntype; it++)
+	for(int it=0; it<GlobalC::ucell.ntype; it++)
 	{
-		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
 			// zero bigcell of meshball indicate ?
 			for(int im=0; im< this->meshball_ncells; im++)
@@ -565,12 +555,12 @@ void Grid_Technique::cal_grid_integration_index(void)
 }
 
 // set 'lgd' variable
-void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
+void Grid_Technique::cal_trace_lo(void)
 {
     ModuleBase::TITLE("Grid_Technique", "cal_trace_lo");
     // save the atom information in trace_lo,
     // in fact the trace_lo dimension can be reduced
-    // to ucell.nat, but I think this is another way.
+    // to GlobalC::ucell.nat, but I think this is another way.
     delete[] trace_lo;
     this->trace_lo = new int[GlobalV::NLOCAL];
     for (int i = 0; i < GlobalV::NLOCAL; i++)
@@ -585,14 +575,14 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
     int iw_all = 0;
     int iw_local = 0;
 
-	for(int it=0; it<ucell.ntype; it++)
+	for(int it=0; it<GlobalC::ucell.ntype; it++)
 	{
-		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
 			if(this->in_this_processor[iat])
 			{
 				++lnat;
-				int nw0 = ucell.atoms[it].nw;
+				int nw0 = GlobalC::ucell.atoms[it].nw;
 				if(GlobalV::NSPIN==4)
 				{//added by zhengdy-soc, need to be double in soc
 					nw0 *= 2;
@@ -600,7 +590,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
 				}
 				else
 				{
-					this->lgd += ucell.atoms[it].nw;
+					this->lgd += GlobalC::ucell.atoms[it].nw;
 				}
 				
 				for(int iw=0; iw<nw0; iw++)
@@ -613,8 +603,8 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
 			else
 			{
 				// global index of atomic orbitals
-				iw_all += ucell.atoms[it].nw;
-				if(GlobalV::NSPIN==4) iw_all += ucell.atoms[it].nw;
+				iw_all += GlobalC::ucell.atoms[it].nw;
+				if(GlobalV::NSPIN==4) iw_all += GlobalC::ucell.atoms[it].nw;
 			}
 			++iat;
 		}
@@ -638,11 +628,11 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 
-void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb)
+void Grid_Technique::init_gpu_gint_variables()
 {
     if (is_malloced)
     {
-        free_gpu_gint_variables(this->nat);
+        free_gpu_gint_variables();
     }
     double ylmcoef[100];
     ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
@@ -658,67 +648,67 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
 
     const Numerical_Orbital_Lm* pointer;
     double max_cut = 0;
-    for (int i = 0; i < ucell.ntype; i++)
+    for (int i = 0; i < GlobalC::ucell.ntype; i++)
     {
-        if (orb.Phi[i].getRcut() > max_cut)
+        if (GlobalC::ORB.Phi[i].getRcut() > max_cut)
         {
-            max_cut = orb.Phi[i].getRcut();
+            max_cut = GlobalC::ORB.Phi[i].getRcut();
         }
     }
 
-    int atom_nw_now[ucell.ntype];
-    int ucell_atom_nwl_now[ucell.ntype];
-    for (int i = 0; i < ucell.ntype; i++)
+    int atom_nw_now[GlobalC::ucell.ntype];
+    int ucell_atom_nwl_now[GlobalC::ucell.ntype];
+    for (int i = 0; i < GlobalC::ucell.ntype; i++)
     {
-        atom_nw_now[i] = ucell.atoms[i].nw;
-        ucell_atom_nwl_now[i] = ucell.atoms[i].nwl;
+        atom_nw_now[i] = GlobalC::ucell.atoms[i].nw;
+        ucell_atom_nwl_now[i] = GlobalC::ucell.atoms[i].nwl;
     }
 
     nr_max = static_cast<int>(1000 * max_cut) + 10;
-    // double psi_u_now[ucell.ntype * ucell.nwmax * nr_max *
+    // double psi_u_now[GlobalC::ucell.ntype * GlobalC::ucell.nwmax * nr_max *
     // 2];
     double* psi_u_now
-        = (double*)malloc(ucell.ntype * ucell.nwmax * nr_max
+        = (double*)malloc(GlobalC::ucell.ntype * GlobalC::ucell.nwmax * nr_max
                           * 2 * sizeof(double));
     memset(psi_u_now,
            0,
-           ucell.ntype * ucell.nwmax * nr_max * 2
+           GlobalC::ucell.ntype * GlobalC::ucell.nwmax * nr_max * 2
                * sizeof(double));
     bool* atom_iw2_new_now = (bool*)malloc(
-        ucell.ntype * ucell.nwmax * sizeof(bool));
+        GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool));
     memset(atom_iw2_new_now,
            0,
-           ucell.ntype * ucell.nwmax * sizeof(bool));
-    int* atom_iw2_ylm_now = (int*)malloc(ucell.ntype
-                                         * ucell.nwmax * sizeof(int));
+           GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool));
+    int* atom_iw2_ylm_now = (int*)malloc(GlobalC::ucell.ntype
+                                         * GlobalC::ucell.nwmax * sizeof(int));
     memset(atom_iw2_ylm_now,
            0,
-           ucell.ntype * ucell.nwmax * sizeof(int));
-    int* atom_iw2_l_now = (int*)malloc(ucell.ntype
-                                       * ucell.nwmax * sizeof(int));
+           GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int));
+    int* atom_iw2_l_now = (int*)malloc(GlobalC::ucell.ntype
+                                       * GlobalC::ucell.nwmax * sizeof(int));
     memset(atom_iw2_l_now,
            0,
-           ucell.ntype * ucell.nwmax * sizeof(int));
+           GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int));
 
     Atom* atomx;
-    for (int i = 0; i < ucell.ntype; i++)
+    for (int i = 0; i < GlobalC::ucell.ntype; i++)
     {
-        atomx = &ucell.atoms[i];
-        for (int j = 0; j < ucell.nwmax; j++)
+        atomx = &GlobalC::ucell.atoms[i];
+        for (int j = 0; j < GlobalC::ucell.nwmax; j++)
         {
             if (j < atomx->nw)
             {
-                atom_iw2_new_now[i * ucell.nwmax + j]
+                atom_iw2_new_now[i * GlobalC::ucell.nwmax + j]
                     = atomx->iw2_new[j];
-                atom_iw2_ylm_now[i * ucell.nwmax + j]
+                atom_iw2_ylm_now[i * GlobalC::ucell.nwmax + j]
                     = atomx->iw2_ylm[j];
-                atom_iw2_l_now[i * ucell.nwmax + j] = atomx->iw2l[j];
-                pointer = &orb.Phi[i].PhiLN(atomx->iw2l[j],
+                atom_iw2_l_now[i * GlobalC::ucell.nwmax + j] = atomx->iw2l[j];
+                pointer = &GlobalC::ORB.Phi[i].PhiLN(atomx->iw2l[j],
                                                      atomx->iw2n[j]);
                 for (int k = 0; k < nr_max; k++)
                 {
                     int index_temp
-                        = (i * ucell.nwmax * nr_max + j * nr_max + k)
+                        = (i * GlobalC::ucell.nwmax * nr_max + j * nr_max + k)
                           * 2;
                     if (k < pointer->nr_uniform)
                     {
@@ -731,55 +721,55 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
     }
 
     checkCudaErrors(
-        cudaMalloc((void**)&atom_nw_g, ucell.ntype * sizeof(int)));
+        cudaMalloc((void**)&atom_nw_g, GlobalC::ucell.ntype * sizeof(int)));
     checkCudaErrors(cudaMemcpy(atom_nw_g,
                                atom_nw_now,
-                               ucell.ntype * sizeof(int),
+                               GlobalC::ucell.ntype * sizeof(int),
                                cudaMemcpyHostToDevice));
 
     checkCudaErrors(cudaMalloc((void**)&atom_nwl_g,
-                               ucell.ntype * sizeof(int)));
+                               GlobalC::ucell.ntype * sizeof(int)));
     checkCudaErrors(cudaMemcpy(atom_nwl_g,
                                ucell_atom_nwl_now,
-                               ucell.ntype * sizeof(int),
+                               GlobalC::ucell.ntype * sizeof(int),
                                cudaMemcpyHostToDevice));
 
     checkCudaErrors(cudaMalloc((void**)&psi_u_g,
-                               ucell.ntype * ucell.nwmax
+                               GlobalC::ucell.ntype * GlobalC::ucell.nwmax
                                    * nr_max * sizeof(double) * 2));
     checkCudaErrors(cudaMemcpy(psi_u_g,
                                psi_u_now,
-                               ucell.ntype * ucell.nwmax
+                               GlobalC::ucell.ntype * GlobalC::ucell.nwmax
                                    * nr_max * sizeof(double) * 2,
                                cudaMemcpyHostToDevice));
 
     checkCudaErrors(
         cudaMalloc((void**)&atom_new_g,
-                   ucell.ntype * ucell.nwmax * sizeof(bool)));
+                   GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool)));
     checkCudaErrors(
         cudaMalloc((void**)&atom_ylm_g,
-                   ucell.ntype * ucell.nwmax * sizeof(int)));
+                   GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int)));
     checkCudaErrors(
         cudaMalloc((void**)&atom_l_g,
-                   ucell.ntype * ucell.nwmax * sizeof(int)));
+                   GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int)));
 
     checkCudaErrors(
         cudaMemcpy(atom_new_g,
                    atom_iw2_new_now,
-                   ucell.ntype * ucell.nwmax * sizeof(bool),
+                   GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool),
                    cudaMemcpyHostToDevice));
     checkCudaErrors(
         cudaMemcpy(atom_ylm_g,
                    atom_iw2_ylm_now,
-                   ucell.ntype * ucell.nwmax * sizeof(int),
+                   GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int),
                    cudaMemcpyHostToDevice));
     checkCudaErrors(
         cudaMemcpy(atom_l_g,
                    atom_iw2_l_now,
-                   ucell.ntype * ucell.nwmax * sizeof(int),
+                   GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int),
                    cudaMemcpyHostToDevice));
 
-    const int max_atom_pair_number = ucell.nat * ucell.nat;
+    const int max_atom_pair_number = GlobalC::ucell.nat * GlobalC::ucell.nat;
     checkCudaErrors(cudaMallocHost(
         (void**)&grid_vlocal_g,
         max_atom_pair_number
@@ -791,7 +781,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
         grid_vlocal_g[iat] = nullptr;
     }
 
-    psir_size = nbzp * max_atom * bxyz * ucell.nwmax;
+    psir_size = nbzp * max_atom * bxyz * GlobalC::ucell.nwmax;
 
     checkCudaErrors(cudaMalloc((void**)&left_global_g,
                                psir_size * nstreams * sizeof(double)));
@@ -942,7 +932,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
         checkCudaErrors(cudaStreamCreate(&streams[i]));
     }
 
-    gemm_algo_selector(bxyz, fastest_matrix_mul,ucell);
+    gemm_algo_selector(bxyz, fastest_matrix_mul);
 
     is_malloced = true;
 
@@ -951,7 +941,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
     free(atom_iw2_ylm_now);
 }
 
-void Grid_Technique::free_gpu_gint_variables(int nat)
+void Grid_Technique::free_gpu_gint_variables()
 {
     if (!is_malloced)
     {
@@ -1028,7 +1018,7 @@ void Grid_Technique::free_gpu_gint_variables(int nat)
     checkCudaErrors(cudaFree(dot_product_g));
     checkCudaErrors(cudaFree(rho_g));
 
-    const int max_atom_pair_number = nat * nat;
+    const int max_atom_pair_number = GlobalC::ucell.nat * GlobalC::ucell.nat;
     for (int i = 0; i < max_atom_pair_number; i++)
     {
         if (grid_vlocal_g[i] != nullptr)

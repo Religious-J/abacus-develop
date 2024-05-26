@@ -14,7 +14,7 @@ namespace hamilt {
 #define __VEFFTEMPLATE
 
 template<class T> class Veff : public T {};
-// template<typename Real, typename Device = base_device::DEVICE_CPU>
+// template<typename Real, typename Device = psi::DEVICE_CPU>
 // class Veff : public OperatorPW<T, Device> {};
 
 #endif
@@ -60,18 +60,19 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
+    psi::DEVICE_CPU* cpu_ctx = {};
 
     int veff_col = 0;
     int veff_row = 0;
     const Real *veff = nullptr, *h_veff = nullptr, *d_veff = nullptr;
     T *porter = nullptr;
     T *porter1 = nullptr;
-    base_device::AbacusDevice_t device = {};
+    psi::AbacusDevice_t device = {};
     using veff_op = veff_pw_op<Real, Device>;
 
-    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+
+    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
 };
 
 } // namespace hamilt

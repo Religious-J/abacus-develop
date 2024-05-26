@@ -34,8 +34,8 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
 
-    int pdm_size = 0;
-    if(!GlobalV::deepks_equiv)
+    int pdm_size;
+    if(!if_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -93,7 +93,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
             //trace alpha orbital
             std::vector<int> trace_alpha_row;
             std::vector<int> trace_alpha_col;
-            if(!GlobalV::deepks_equiv)
+            if(!if_equiv)
             {
                 int ib=0;
                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -231,7 +231,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                         &row_size);
 				}//ad2
                 // do dot of g_1dmt and s_1t to get orbital_pdm_shell
-                if(!GlobalV::deepks_equiv)
+                if(!if_equiv)
                 {
                     int ib=0, index=0, inc=1;
                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -290,8 +290,8 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
     Grid_Driver& GridD)
 {
 
-    int pdm_size = 0;
-    if(!GlobalV::deepks_equiv)
+    int pdm_size;
+    if(!if_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -350,7 +350,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
             //trace alpha orbital
             std::vector<int> trace_alpha_row;
             std::vector<int> trace_alpha_col;
-            if(!GlobalV::deepks_equiv)
+            if(!if_equiv)
             {
                 int ib=0;
                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -495,7 +495,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                         &row_size);
 				}//ad2
                 // do dot of g_1dmt and s_1t to get orbital_pdm_shell
-                if(!GlobalV::deepks_equiv)
+                if(!if_equiv)
                 {
                     int ib=0, index=0, inc=1;
                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)

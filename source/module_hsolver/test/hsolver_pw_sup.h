@@ -142,12 +142,12 @@ void DiagoCG<T, Device>::diag(
     return;
 }
 
-template class DiagoCG<std::complex<float>, base_device::DEVICE_CPU>;
-template class DiagoCG<std::complex<double>, base_device::DEVICE_CPU>;
+template class DiagoCG<std::complex<float>, psi::DEVICE_CPU>;
+template class DiagoCG<std::complex<double>, psi::DEVICE_CPU>;
 
 template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in)
 {
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = psi::device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
     test_david = 2;
@@ -168,9 +168,8 @@ template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
-    if (this->device == base_device::GpuDevice)
-    {
+    psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
+    if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, this->d_precondition);
     }
     delete this->one;
@@ -197,11 +196,11 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     DiagoIterAssist<T, Device>::avg_iter += 1.0;
     return;
 }
-template class DiagoDavid<std::complex<float>, base_device::DEVICE_CPU>;
-template class DiagoDavid<std::complex<double>, base_device::DEVICE_CPU>;
+template class DiagoDavid<std::complex<float>, psi::DEVICE_CPU>;
+template class DiagoDavid<std::complex<double>, psi::DEVICE_CPU>;
 
-template class DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>;
-template class DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<float>, psi::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
 
 }//namespace hsolver
 
@@ -210,12 +209,12 @@ namespace hamilt
 {
 
 template <>
-void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
+void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx,
                         const int& ik,
-                        psi::Psi<std::complex<float>, base_device::DEVICE_CPU>& wvf,
+                        psi::Psi<std::complex<float>, psi::DEVICE_CPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
-                        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* phm_in)
+                        hamilt::Hamilt<std::complex<float>, psi::DEVICE_CPU>* phm_in)
 {
     for (int i = 0; i < wvf.size(); i++)
     {
@@ -224,12 +223,12 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
 }
 
 template <>
-void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
+void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx,
                         const int& ik,
-                        psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& wvf,
+                        psi::Psi<std::complex<double>, psi::DEVICE_CPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
-                        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* phm_in)
+                        hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU>* phm_in)
 {
     for (int i = 0; i < wvf.size(); i++)
     {
@@ -239,5 +238,5 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
 
 }//namespace hsolver
 
-template class hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
-template class hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
+template class hsolver::HSolverPW<std::complex<float>,  psi::DEVICE_CPU>;
+template class hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>;

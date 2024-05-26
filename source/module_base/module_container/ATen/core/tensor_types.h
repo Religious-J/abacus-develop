@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <initializer_list>
 
-#include "module_base/module_device/types.h"
+#include <module_psi/kernels/types.h>
 
 #if defined(__CUDACC__)
 #include <base/macros/cuda.h>
@@ -115,14 +115,12 @@ struct PsiToContainer {
 };
 
 template <>
-struct PsiToContainer<base_device::DEVICE_CPU>
-{
+struct PsiToContainer<psi::DEVICE_CPU> {
     using type = container::DEVICE_CPU; /**< The return type specialization for std::complex<float>. */
 };
 
 template <>
-struct PsiToContainer<base_device::DEVICE_GPU>
-{
+struct PsiToContainer<psi::DEVICE_GPU> {
     using type = container::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
 };
 
@@ -133,12 +131,12 @@ struct ContainerToPsi {
 
 template <>
 struct ContainerToPsi<container::DEVICE_CPU> {
-    using type = base_device::DEVICE_CPU; /**< The return type specialization for std::complex<float>. */
+    using type = psi::DEVICE_CPU; /**< The return type specialization for std::complex<float>. */
 };
 
 template <>
 struct ContainerToPsi<container::DEVICE_GPU> {
-    using type = base_device::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
+    using type = psi::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
 };
 
 
@@ -168,13 +166,11 @@ struct DeviceTypeToEnum<DEVICE_GPU> {
     static constexpr DeviceType value = DeviceType::GpuDevice;
 };
 template <>
-struct DeviceTypeToEnum<base_device::DEVICE_CPU>
-{
+struct DeviceTypeToEnum<psi::DEVICE_CPU> {
     static constexpr DeviceType value = DeviceType::CpuDevice;
 };
 template <>
-struct DeviceTypeToEnum<base_device::DEVICE_GPU>
-{
+struct DeviceTypeToEnum<psi::DEVICE_GPU> {
     static constexpr DeviceType value = DeviceType::GpuDevice;
 };
 

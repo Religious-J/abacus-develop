@@ -38,7 +38,7 @@ double H_TDDFT_pw::lcut1;
 double H_TDDFT_pw::lcut2;
 
 //velocity gauge
-ModuleBase::Vector3<double> H_TDDFT_pw::At;
+double H_TDDFT_pw::At[3]={0.0,0.0,0.0};
 
 // time domain parameters
 

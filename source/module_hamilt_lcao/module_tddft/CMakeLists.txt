@@ -7,7 +7,6 @@ if(ENABLE_LCAO)
         norm_psi.cpp
         propagator.cpp
         upsi.cpp
-        td_velocity.cpp
     )
 
     add_library(

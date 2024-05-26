@@ -41,10 +41,11 @@ __global__ void veff_pw(
 }
 
 template <typename FPTYPE>
-void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
-                                                             const int& size,
-                                                             std::complex<FPTYPE>* out,
-                                                             const FPTYPE* in)
+void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
+    const psi::DEVICE_GPU* dev,
+    const int& size,
+    std::complex<FPTYPE>* out,
+    const FPTYPE* in)
 {
     const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     veff_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
@@ -57,11 +58,12 @@ void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
 }
 
 template <typename FPTYPE>
-void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
-                                                             const int& size,
-                                                             std::complex<FPTYPE>* out,
-                                                             std::complex<FPTYPE>* out1,
-                                                             const FPTYPE** in)
+void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
+    const psi::DEVICE_GPU* dev,
+    const int& size,
+    std::complex<FPTYPE>* out,
+    std::complex<FPTYPE>* out1,
+    const FPTYPE** in)
 {
     const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     veff_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
@@ -74,7 +76,7 @@ void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
     cudaErrcheck(cudaDeviceSynchronize());
 }
 
-template struct veff_pw_op<float, base_device::DEVICE_GPU>;
-template struct veff_pw_op<double, base_device::DEVICE_GPU>;
+template struct veff_pw_op<float, psi::DEVICE_GPU>;
+template struct veff_pw_op<double, psi::DEVICE_GPU>;
 
 }  // namespace hamilt

@@ -3,7 +3,7 @@
 #include "module_base/math_ylmreal.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/module_device/device.h"
+#include "module_psi/kernels/device.h"
 
 //calculate the nonlocal pseudopotential stress in PW
 template <typename FPTYPE, typename Device>
@@ -26,7 +26,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         return;
     }
 
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = psi::device::get_device_type<Device>(this->ctx);
 
     // There is a contribution for jh<>ih in US case or multi projectors case
     // Actually, the judge of nondiagonal should be done on every atom type
@@ -56,6 +56,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     std::complex<FPTYPE> *dbecp = nullptr, *becp = nullptr, *dbecp_noevc = nullptr, *vkb = nullptr, *pvkb0 = nullptr,
                          *vkb1 = nullptr, *pvkb2 = nullptr;
     std::complex<FPTYPE> *_vkb0[3] = {nullptr, nullptr, nullptr};
+    ModuleBase::Memory::record("Stree_func::ComplexMatrix",sizeof(double)*nkb*npwx*4);
     resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb, "Stress::becp");
     resmem_complex_op()(this->ctx, dbecp, GlobalV::NBANDS * nkb, "Stress::dbecp");
     resmem_complex_op()(this->ctx, dbecp_noevc, nkb * npwx, "Stress::dbecp_noevc");
@@ -76,7 +77,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     resmem_var_op()(this->ctx, stress, 9);
     setmem_var_op()(this->ctx, stress, 0, 9);
     resmem_var_h_op()(this->cpu_ctx, sigmanlc, 9);
-    if (this->device == base_device::GpuDevice)
+    if (this->device == psi::GpuDevice)
     {
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
         resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc);
@@ -161,7 +162,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
                   becp,
                   nkb);
         // becp calculate is over , now we should broadcast this data.
-        if (this->device == base_device::GpuDevice)
+        if (this->device == psi::GpuDevice)
         {
             std::complex<FPTYPE> *h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
@@ -177,13 +178,13 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         for (int i = 0; i < 3; i++)
         {
             get_dvnl1(vkb0[i], ik, i, p_sf, wfc_basis);
-            if (this->device == base_device::GpuDevice)
+            if (this->device == psi::GpuDevice)
             {
                 syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, _vkb0[i], vkb0[i].c, nkb * npwx);
             }
         }
         get_dvnl2(vkb2, ik, p_sf, wfc_basis);
-        if (this->device == base_device::GpuDevice)
+        if (this->device == psi::GpuDevice)
         {
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, pvkb2, vkb2.c, nkb * npwx);
         }
@@ -313,8 +314,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     delmem_complex_op()(this->ctx, dbecp);
     delmem_complex_op()(this->ctx, dbecp_noevc);
 	delmem_var_h_op()(this->cpu_ctx, sigmanlc);
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, d_wg);
         delmem_var_op()(this->ctx, d_ekb);
         delmem_var_op()(this->ctx, gcar);
@@ -322,7 +322,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         delmem_int_op()(this->ctx, atom_na);
         delmem_complex_op()(this->ctx, pvkb2);
     }
-    //  this->print(GlobalV::ofs_running, "nonlocal stress", stresnl);
+	//  this->print(GlobalV::ofs_running, "nonlocal stress", stresnl);
 	ModuleBase::timer::tick("Stress_Func","stress_nl");
 }
 
@@ -711,7 +711,7 @@ void Stress_Func<FPTYPE, Device>::dylmr2 (
 	return;
 }
 
-template class Stress_Func<double, base_device::DEVICE_CPU>;
+template class Stress_Func<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Stress_Func<double, base_device::DEVICE_GPU>;
+template class Stress_Func<double, psi::DEVICE_GPU>;
 #endif

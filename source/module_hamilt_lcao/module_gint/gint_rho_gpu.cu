@@ -1,4 +1,5 @@
 #include "kernels/cuda/cuda_tools.cuh"
+#include "kernels/cuda/vbatch_matrix_mul.cuh"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_rho.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"

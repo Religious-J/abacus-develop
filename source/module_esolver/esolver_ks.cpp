@@ -455,17 +455,16 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
         // 3) print head
-		// if(this->maxniter > 0)  
-		// {
-		// 	this->print_head(); //print the headline on the screen.
-		// }
+		if(this->maxniter > 0)  
+		{
+			this->print_head(); //print the headline on the screen.
+		}
 
 		bool firstscf = true;
 		this->conv_elec = false;
 		this->niter = this->maxniter;
 
         // 4) SCF iterations
-		std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
 		for (int iter = 1; iter <= this->maxniter; ++iter)
 		{
             // 5) write head
@@ -623,7 +622,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 				std::cout<<" SCF restart after this step!"<<std::endl;
 			}
 		}// end scf iterations
-		std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
+
 
 #ifdef __RAPIDJSON
 		// 14) add Json of efermi energy converge
@@ -717,33 +716,14 @@ void ESolver_KS<T, Device>::write_head(std::ofstream& ofs_running, const int ist
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
-int ESolver_KS<T, Device>::get_niter()
+int ESolver_KS<T, Device>::getniter()
 {
 	return this->niter;
 }
 
-//------------------------------------------------------------------------------
-//! the 11th function of ESolver_KS: get_maxniter
-//! tqzhao add 2024-05-15
-//------------------------------------------------------------------------------
-template<typename T, typename Device>
-int ESolver_KS<T, Device>::get_maxniter()
-{
-	return this->maxniter;
-}
 
 //------------------------------------------------------------------------------
-//! the 12th function of ESolver_KS: get_conv_elec
-//! tqzhao add 2024-05-15
-//------------------------------------------------------------------------------
-template<typename T, typename Device>
-bool ESolver_KS<T, Device>::get_conv_elec()
-{
-	return this->conv_elec;
-}
-
-//------------------------------------------------------------------------------
-//! the 13th function of ESolver_KS: create_Output_Rho
+//! the 11th function of ESolver_KS: create_Output_Rho
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
@@ -785,7 +765,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 
 
 //------------------------------------------------------------------------------
-//! the 14th function of ESolver_KS: create_Output_Kin
+//! the 12th function of ESolver_KS: create_Output_Kin
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
@@ -809,7 +789,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, 
 
 
 //------------------------------------------------------------------------------
-//! the 15th function of ESolver_KS: create_Output_Potential
+//! the 13th function of ESolver_KS: create_Output_Potential
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
@@ -834,21 +814,21 @@ ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int it
 
 
 //------------------------------------------------------------------------------
-//! the 16th-20th functions of ESolver_KS
+//! the 14th-18th functions of ESolver_KS
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 //! This is for mixed-precision pw/LCAO basis sets.
-template class ESolver_KS<std::complex<float>, base_device::DEVICE_CPU>;
-template class ESolver_KS<std::complex<double>, base_device::DEVICE_CPU>;
+template class ESolver_KS<std::complex<float>, psi::DEVICE_CPU>;
+template class ESolver_KS<std::complex<double>, psi::DEVICE_CPU>;
 
 //! This is for GPU codes.
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS<std::complex<float>, base_device::DEVICE_GPU>;
-template class ESolver_KS<std::complex<double>, base_device::DEVICE_GPU>;
+template class ESolver_KS<std::complex<float>, psi::DEVICE_GPU>;
+template class ESolver_KS<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 
 //! This is for LCAO basis set.
 #ifdef __LCAO
-template class ESolver_KS<double, base_device::DEVICE_CPU>;
+template class ESolver_KS<double, psi::DEVICE_CPU>;
 #endif
 }

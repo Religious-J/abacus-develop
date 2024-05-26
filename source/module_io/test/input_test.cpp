@@ -170,7 +170,6 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_dm1,0);
         EXPECT_EQ(INPUT.deepks_out_labels,0);
         EXPECT_EQ(INPUT.deepks_scf,0);
-		EXPECT_EQ(INPUT.deepks_equiv,0);
         EXPECT_EQ(INPUT.deepks_bandgap,0);
         EXPECT_EQ(INPUT.deepks_out_unittest,0);
         EXPECT_EQ(INPUT.out_pot,0);
@@ -538,7 +537,6 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_dm1,0);
         EXPECT_EQ(INPUT.deepks_out_labels,0);
         EXPECT_EQ(INPUT.deepks_scf,0);
-		EXPECT_EQ(INPUT.deepks_equiv,0);
         EXPECT_EQ(INPUT.deepks_bandgap,0);
         EXPECT_EQ(INPUT.deepks_out_unittest,0);
         EXPECT_EQ(INPUT.out_pot,2);

@@ -2,7 +2,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_cell/unitcell.h"
+
 namespace hamilt
 {
 
@@ -112,7 +112,8 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
             }
         }
     }
-    this->GK->transfer_pvpR(this->hR,this->ucell,GlobalC::ORB,this->gd);
+
+    this->GK->transfer_pvpR(this->hR);
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;
@@ -147,7 +148,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
         Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
         this->GG->cal_vlocal(&inout,  this->new_e_iteration);
     }
-    this->GG->transfer_pvpR(this->hR,this->ucell,GlobalC::ORB);
+    this->GG->transfer_pvpR(this->hR);
 
     this->new_e_iteration = false;
     ModuleBase::timer::tick("Veff", "contributeHR");

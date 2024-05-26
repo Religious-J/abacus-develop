@@ -17,8 +17,7 @@ void grid_prepare(
 {
     ModuleBase::TITLE("LCAO_domain","grid_prepare");
     ModuleBase::timer::tick("LCAO_domain","grid_prepare");
-	const UnitCell* ucell = &GlobalC::ucell;
-	const LCAO_Orbitals* orb = &GlobalC::ORB;
+
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
 		gint_gamma.prep_grid(
@@ -35,9 +34,7 @@ void grid_prepare(
 				bigpw.nbxx,
 				rhopw.ny, 
 				rhopw.nplane, 
-				rhopw.startz_current,
-				ucell,
-				orb);
+				rhopw.startz_current);
 	}
     else // multiple k-points
     {
@@ -56,9 +53,7 @@ void grid_prepare(
 				bigpw.nbxx,
 				rhopw.ny, 
 				rhopw.nplane, 
-				rhopw.startz_current,
-				ucell,
-				orb);
+				rhopw.startz_current);
 	}
 
     ModuleBase::timer::tick("LCAO_domain","grid_prepare");

@@ -54,8 +54,7 @@ AddTest(
     ../elecstate.cpp
     ../occupy.cpp
     ../../module_psi/psi.cpp
-    # ../../module_psi/kernels/psi_memory_op.cpp
-    ../../module_base/module_device/memory_op.cpp
+    ../../module_psi/kernels/psi_memory_op.cpp
 )
 
 AddTest(
