@@ -79,11 +79,16 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
     pHamilt->ops->hPsi(hpsi_in);
 
     // --- print --- //
-    std::cout << "nstart = " << nstart
+    std::cout << "***" << "nstart = " << nstart
             << " dmin = " << dmin 
             << " dmax = " << dmax;
 
     std::cout << std::endl;
+     
+    // nstart 8
+    // dmin =  
+
+
     // ------------- //
 
     gemm_op<T, Device>()(
