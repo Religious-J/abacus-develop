@@ -109,11 +109,11 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
     }
 
     // --- print --- //
-    std::cout << "***" << "nstart = " << nstart
-            << " dmin = " << dmin 
-            << " dmax = " << dmax;
+    // std::cout << "***" << "nstart = " << nstart
+    //         << " dmin = " << dmin 
+    //         << " dmax = " << dmax;
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
      
     // nstart 8
     // dmin =  2685
@@ -138,13 +138,13 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
     // );
 
 // print
-    std::cout << "hcc: " << std::endl;
-    int num=1;
-    for(int i=0; i < nstart*nstart; i++){
-         std::cout << *(hcc+i) << " "; 
-         if(num++ % 8 == 0) std::cout << std::endl;
-    }
-    std::cout << std::endl;
+    // std::cout << "hcc: " << std::endl;
+    // int num=1;
+    // for(int i=0; i < nstart*nstart; i++){
+    //      std::cout << *(hcc+i) << " "; 
+    //      if(num++ % 8 == 0) std::cout << std::endl;
+    // }
+    // std::cout << std::endl;
 
     // for(int i=0; i < psi.get_nbands() * psi.get_nbasis(); i++){
     //     std::cout << "hphi: " << *(hphi+i) << " "; 
@@ -357,26 +357,14 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
 //         }
 //     }
 
-    // do hPsi for all bands
     if (base_device::get_device_type(ctx) == base_device::GpuDevice) // GPU
     {
-        // 循环遍历所有能带 bands
         for (int i = 0; i < psi_temp.get_nbands(); i++)
         {
-            // 创建了一个波段范围对象，用于表示当前循环中的能带
-/*
-Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_1_in, const size_t range_2_in)
-{
-    k_first = k_first_in;
-    index_1 = index_1_in;
-    range_1 = range_1_in;
-    range_2 = range_2_in;
-}
-*/          // Psi(nks, nbands, nbasis)
+          // Psi(nks, nbands, nbasis)
             psi::Range band_by_band_range(1, psi_temp.get_current_k(), i, i);
-            // 创建了一个用于存储哈密顿量作用结果的临时对象 hpsi_in，该对象包括了波函数对象、波段范围和存储结果的数组。
-            hpsi_info hpsi_in(&psi_temp, band_by_band_range, hpsi + i * psi_temp.get_nbasis());
-            // 算子
+            hpsi_info hpsi_in(&psi_temp, band_by_band_range, hpsi);
+
             if (pHamilt->ops == nullptr)
             {
                 ModuleBase::WARNING("DiagoIterAssist::diagH_subspace_init",
@@ -451,7 +439,8 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
     // CPU端
     else if (base_device::get_device_type(ctx) == base_device::CpuDevice) // CPU
     {
-        
+
+     std::cout << "CPU CPU CPU CPU CPU CPU" << std::endl;   
         for (int i = 0; i < psi_temp.get_nbands(); i++)
         {
             psi::Range band_by_band_range(1, psi_temp.get_current_k(), i, i);
@@ -490,9 +479,17 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
                 hcc + i*nstart,
                 1
             );
-
         }
     }
+
+    // print
+    std::cout << "***hcc: " << std::endl;
+    int num=1;
+    for(int i=0; i < nstart*nstart; i++){
+         std::cout << *(hcc+i) << " "; 
+         if(num++ % 8 == 0) std::cout << std::endl;
+    }
+    std::cout << std::endl;
 
 
     // 函数使用 BLAS 操作 gemm（通用矩阵乘法）两次执行涉及哈密顿量和重叠矩阵（位于 vcc 和 scc中）的矩阵乘法
@@ -536,20 +533,20 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
 
 // // true
 //     // dmin x dmax * dmax x nstrat
-//     gemm_op<T, Device>()(ctx,
-//                          'C',
-//                          'N',
-//                          nstart,
-//                          nstart,
-//                          dmin,  // dmin = evc.get_current_nbas();  current_k 的当前 basis 数
-//                          &one,
-//                          ppsi, // psi_temp H dmin * dmax
-//                          dmax,
-//                          hpsi, // dmax * nstart       dmax = basis 数    nstart = psi_nr = bands 数
-//                          dmax,
-//                          &zero,
-//                          hcc, // nstart * nstart
-//                          nstart);
+    // gemm_op<T, Device>()(ctx,
+    //                      'C',
+    //                      'N',
+    //                      nstart,
+    //                      nstart,
+    //                      dmin,  // dmin = evc.get_current_nbas();  current_k 的当前 basis 数
+    //                      &one,
+    //                      ppsi, // psi_temp H dmin * dmax
+    //                      dmax,
+    //                      hpsi, // dmax * nstart       dmax = basis 数    nstart = psi_nr = bands 数
+    //                      dmax,
+    //                      &zero,
+    //                      hcc, // nstart * nstart
+    //                      nstart);
 
     // 把临时申请的 hpsi 的 free
     delmem_complex_op()(ctx, hpsi);
