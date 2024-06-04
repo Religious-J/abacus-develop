@@ -352,7 +352,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           ps,
                           inc,
                           &one,
-                          spsi,
+                          spsi,   // 
                           inc);
             }
             else
@@ -369,7 +369,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           ps,
                           this->ppcell->nkb,
                           &one,
-                          spsi,
+                          spsi,   // 
                           nrow);
             }
         }

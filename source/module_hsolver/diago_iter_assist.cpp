@@ -324,11 +324,11 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
                          'N',
                          nstart,
                          nstart,
-                         dmin,
+                         dmin,  // dmin = evc.get_current_nbas();  current_k 的当前 basis 数
                          &one,
                          ppsi, // psi_temp H dmin * dmax
                          dmax,
-                         hpsi, // dmax * nstart       dmax - basis 数
+                         hpsi, // dmax * nstart       dmax = basis 数    nstart = psi_nr = bands 数
                          dmax,
                          &zero,
                          hcc, // nstart * nstart
