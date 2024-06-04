@@ -38,7 +38,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
     // two case:
     // 1. pw base: nstart = n_band, psi(nbands * npwx)
     // 2. lcao_in_pw base: nstart >= n_band, psi(NLOCAL * npwx)
-    const int nstart = psi.get_nbands();
+    const int nstart = psi.get_nbands();  // nbands
     if (n_band == 0)
         n_band = nstart;
     assert(n_band <= nstart);
@@ -52,11 +52,11 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
     setmem_complex_op()(ctx, scc, 0, nstart * nstart);
     setmem_complex_op()(ctx, vcc, 0, nstart * nstart);
 
-    const int dmin = psi.get_current_nbas();
-    const int dmax = psi.get_nbasis();
+    const int dmin = psi.get_current_nbas();  // current_k 的当前 basis 数
+    const int dmax = psi.get_nbasis();        // basis 数
 
     // qianrui improve this part 2021-3-14
-    const T* ppsi = psi.get_pointer();
+    const T* ppsi = psi.get_pointer();       // ppsi -> psi
 
     std::cout << "############################" << std::endl;
 
@@ -78,7 +78,35 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
     hpsi_info hpsi_in(&psi, all_bands_range, hphi);
     pHamilt->ops->hPsi(hpsi_in);
 
-    gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, hphi, dmax, &zero, hcc, nstart);
+    // --- print --- //
+    std::cout << "nstart = " << nstart
+            << " dmin = " << dmin 
+            << " dmax = " << dmax;
+
+    std::cout << std::endl;
+    // ------------- //
+
+    gemm_op<T, Device>()(
+        ctx,
+        'C',
+        'N',
+        nstart,
+        nstart,
+        dmin,  
+        &one,
+        ppsi,  // nbands * nbasis
+        dmax,  // nbasis
+        hphi,
+        dmax,
+        &zero,
+        hcc,
+        nstart
+    );
+
+
+    // // do hPsi for all band by band
+    // for (int i = 0; i < psi.get_nbands(); i++){
+    //     // Psi(nks, nbands, nbasis)hpsi_info hpsi_in(&psi_temp, band_by_band_range, hpsi + i * psi_temp.get_nbasis());
 
     delmem_complex_op()(ctx, hphi);
 
