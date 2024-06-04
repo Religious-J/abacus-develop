@@ -12,4 +12,4 @@ scf_thr                 1e-8
 scf_nmax               	100
 
 cal_force              1
-
+ks_solver              cg

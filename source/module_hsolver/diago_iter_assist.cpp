@@ -72,12 +72,15 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
     T* hphi = nullptr;
     resmem_complex_op()(ctx, hphi, psi.get_nbands() * psi.get_nbasis(), "DiagSub::hpsi");
     setmem_complex_op()(ctx, hphi, 0, psi.get_nbands() * psi.get_nbasis());
+
     // do hPsi for all bands
     psi::Range all_bands_range(1, psi.get_current_k(), 0, psi.get_nbands() - 1);
     hpsi_info hpsi_in(&psi, all_bands_range, hphi);
     pHamilt->ops->hPsi(hpsi_in);
 
     gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, hphi, dmax, &zero, hcc, nstart);
+
+    
     delmem_complex_op()(ctx, hphi);
 
     // allocated spsi
@@ -318,21 +321,55 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
     // ppsi hpsi -> hcc
     // hcc=one⋅op(ppsi)⋅op(hpsi)+zero⋅hcc
 
-    // dmin x dmax * dmax x nstrat
+
+    //     // ADD
+    // gemv_op<T, Device>()(ctx,
+    //                      'C',       // 传递共轭转置参数
+    //                      dmax,      // A 的行数
+    //                      dmin,      // A 的列数 dmin = nstart
+    //                      &one,      // alpha
+    //                      ppsi,      // A 矩阵
+    //                      dmax,      
+    //                      hpsi_,         // x 向量
+    //                      1,         // x 的步进
+    //                      &zero,     // beta
+    //                      hcc_,         // y 向量
+    //                      1);        // y 的步进
+
+
+
+  // dmin x dmax * dmax x nstrat = dmin x nstrat = nstrat x nstart
     gemm_op<T, Device>()(ctx,
                          'C',
                          'N',
                          nstart,
                          nstart,
-                         dmin,  // dmin = evc.get_current_nbas();  current_k 的当前 basis 数
+                         nstart,  // dmin = evc.get_current_nbas();  current_k 的当前 basis 数
                          &one,
-                         ppsi, // psi_temp H dmin * dmax
+                         ppsi, // psi_temp H dmin * dmax  => nstart * dmax
                          dmax,
                          hpsi, // dmax * nstart       dmax = basis 数    nstart = psi_nr = bands 数
                          dmax,
                          &zero,
                          hcc, // nstart * nstart
                          nstart);
+
+// // true
+//     // dmin x dmax * dmax x nstrat
+//     gemm_op<T, Device>()(ctx,
+//                          'C',
+//                          'N',
+//                          nstart,
+//                          nstart,
+//                          dmin,  // dmin = evc.get_current_nbas();  current_k 的当前 basis 数
+//                          &one,
+//                          ppsi, // psi_temp H dmin * dmax
+//                          dmax,
+//                          hpsi, // dmax * nstart       dmax = basis 数    nstart = psi_nr = bands 数
+//                          dmax,
+//                          &zero,
+//                          hcc, // nstart * nstart
+//                          nstart);
 
     // 把临时申请的 hpsi 的 free
     delmem_complex_op()(ctx, hpsi);
@@ -401,14 +438,14 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
         gemm_op<T, Device>()(ctx,
                              'N',
                              'N',
-                             dmax,
-                             n_band,
-                             nstart,
+                             dmax,   // 1
+                             n_band, // 2
+                             nstart,  // 3
                              &one,
                              ppsi, // dmax * nstart
-                             dmax,
+                             dmax,  // 1
                              vcc, // nstart * n_band
-                             nstart,
+                             nstart,  // 3
                              &zero,
                              evc.get_pointer(),
                              dmax);
