@@ -80,7 +80,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHami
 
     gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, hphi, dmax, &zero, hcc, nstart);
 
-    
     delmem_complex_op()(ctx, hphi);
 
     // allocated spsi
